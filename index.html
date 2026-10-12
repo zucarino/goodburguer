@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Good Burger — Pedido online</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&amp;family=Outfit:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#0F0D0C}
+a{color:#FFC23D}
+a:hover{color:#FFD36B}
+.gb-root *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+.gb-root button{font-family:'Outfit',system-ui,sans-serif}
+.scroll{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:#3A3029 transparent}
+.hide-bar{scrollbar-width:none}
+.hide-bar::-webkit-scrollbar{display:none}
+
+/* ===== botao de fogo ===== */
+.fire-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border:0;border-radius:16px;cursor:pointer;color:#1A0C05;font:700 17px 'Outfit',system-ui,sans-serif;text-decoration:none;background:linear-gradient(180deg,#FFC23D 0%,#FF8A1F 55%,#FF5A1F 100%);box-shadow:inset 0 0 0 1px rgba(255,214,140,.55),0 6px 20px rgba(255,90,20,.4);animation:glowPulse 2s ease-in-out infinite alternate}
+.fire-btn::before{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.5) 50%,transparent 70%);background-size:250% 100%;animation:shimmer 3.2s linear infinite;pointer-events:none;mix-blend-mode:soft-light}
+.fire-btn::after{content:'';position:absolute;left:8%;right:8%;bottom:-8px;height:14px;border-radius:50%;background:radial-gradient(ellipse at 50% 0%,rgba(255,200,80,.9),rgba(255,90,20,0) 72%);filter:blur(4px);animation:flameLick 1.1s ease-in-out infinite alternate;pointer-events:none}
+.fire-btn:active{transform:scale(.97)}
+.fire-btn:disabled{filter:grayscale(1) brightness(.55);box-shadow:none;animation:none;cursor:not-allowed}
+.fire-btn:disabled::before,.fire-btn:disabled::after{display:none}
+.fire-sm{min-height:44px;width:44px;padding:0;border-radius:14px}
+
+/* ===== cards ===== */
+.card{transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+.card::after{content:'';position:absolute;left:0;right:0;bottom:0;height:55%;background:linear-gradient(0deg,rgba(255,90,20,.38),rgba(255,90,20,0));opacity:0;transition:opacity .25s;pointer-events:none}
+.card:hover,.card:active{transform:translateY(-3px);border-color:#FF7A1A !important;box-shadow:0 0 0 1px rgba(255,122,26,.55),0 12px 30px rgba(255,90,20,.28)}
+.card:hover::after,.card:active::after{opacity:1;animation:flicker .9s ease-in-out infinite alternate}
+.card:hover .art,.card:active .art{transform:scale(1.08) rotate(-2deg)}
+.art{transition:transform .3s cubic-bezier(.3,1.4,.5,1)}
+
+/* ===== chips / opcoes ===== */
+.chip{flex:none;min-height:44px;padding:0 18px;border-radius:999px;border:1.5px solid #3A3029;background:#1B1715;color:#E9DDD0;font:600 15px 'Outfit',system-ui,sans-serif;cursor:pointer;transition:all .2s}
+.chip.on{background:linear-gradient(180deg,#FFC23D,#FF7A1A);border-color:#FFB347;color:#1A0C05;box-shadow:0 0 18px rgba(255,122,26,.45)}
+.opt{flex:1;min-height:48px;padding:0 12px;border-radius:14px;border:1.5px solid #3A3029;background:#1D1815;color:#E9DDD0;font:600 15px 'Outfit',system-ui,sans-serif;cursor:pointer;transition:all .15s}
+.opt.on{border-color:#FF7A1A;background:rgba(255,122,26,.16);color:#FFE2BF;box-shadow:0 0 14px rgba(255,122,26,.3)}
+.row{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;padding:8px 14px;border-radius:14px;border:1.5px solid #342B25;background:#1D1815;color:#F6EEE6;font:500 15px 'Outfit',system-ui,sans-serif;cursor:pointer;text-align:left;transition:all .15s}
+.row.on{border-color:#FF7A1A;background:rgba(255,122,26,.14)}
+.box{width:24px;height:24px;border-radius:8px;border:2px solid #6B5C50;display:inline-flex;align-items:center;justify-content:center;flex:none;color:transparent}
+.row.on .box{background:#FF7A1A;border-color:#FF7A1A;color:#1A0C05}
+.icon-btn{width:44px;height:44px;border-radius:14px;border:1px solid #3A3029;background:rgba(15,13,12,.8);color:#F6EEE6;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+.icon-btn:active{transform:scale(.94)}
+.step-btn{width:44px;height:44px;border-radius:14px;border:1.5px solid #4A3E35;background:#221C18;color:#FFC23D;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+.step-btn:active{transform:scale(.92);background:#2E241E}
+
+/* ===== formulario ===== */
+.field{width:100%;min-height:48px;padding:12px 14px;border-radius:14px;border:1.5px solid #3A3029;background:#1D1815;color:#F6EEE6;font:500 16px 'Outfit',system-ui,sans-serif;outline:none}
+.field::placeholder{color:#8F8176}
+.field:focus{border-color:#FF7A1A;box-shadow:0 0 0 3px rgba(255,122,26,.25)}
+.field.err{border-color:#FF6B5E}
+textarea.field{min-height:72px;resize:none}
+.lbl{display:block;margin:0 0 6px;font:600 13px 'Outfit',system-ui,sans-serif;color:#CBBDAE;letter-spacing:.02em}
+
+/* ===== brasas ===== */
+.ember{position:absolute;bottom:-14px;border-radius:50%;background:radial-gradient(circle,#FFE08A 0,#FF7A1A 42%,rgba(255,60,0,0) 72%);opacity:0;animation-timing-function:linear;animation-iteration-count:infinite;will-change:transform,opacity}
+.r1{animation-name:rise1}
+.r2{animation-name:rise2}
+.r3{animation-name:rise3}
+
+/* ===== chamas do hero ===== */
+.fl{transform-box:fill-box;transform-origin:50% 100%;animation:flameDance 1.4s ease-in-out infinite alternate}
+.fl:nth-of-type(2n){animation-duration:1.1s;animation-delay:-.4s}
+.fl:nth-of-type(3n){animation-duration:1.7s;animation-delay:-.9s}
+.hero-glow{animation:glowBreath 3s ease-in-out infinite alternate}
+.floaty{animation:floaty 4s ease-in-out infinite alternate}
+
+/* ===== sheets / toast ===== */
+.sheet{animation:sheetUp .32s cubic-bezier(.2,.9,.3,1) both}
+.backdrop{animation:fadeIn .25s ease both}
+.toast{animation:toastIn .3s ease both}
+
+/* ===== sucesso: boca mordendo ===== */
+.jawU{transform-origin:40px 120px;animation:jawU 4.4s cubic-bezier(.45,0,.25,1) both}
+.jawL{transform-origin:40px 122px;animation:jawL 4.4s cubic-bezier(.45,0,.25,1) both}
+.burgerIn{transform-origin:200px 120px;animation:burgerIn .9s cubic-bezier(.2,.8,.2,1) both,burgerOut .45s 3.55s ease-in forwards}
+.bite{transform-box:fill-box;transform-origin:center;transform:scale(0);animation:bite .18s ease-out forwards}
+.crumb{opacity:0;animation-duration:.75s;animation-fill-mode:both;animation-timing-function:ease-out}
+.ca{animation-name:crumbA}
+.cb{animation-name:crumbB}
+.cc{animation-name:crumbC}
+.okPop{transform-box:fill-box;transform-origin:center;transform:scale(0);animation:okPop .5s 3.9s cubic-bezier(.3,1.6,.5,1) forwards}
+.fadeUp{opacity:0;animation:fadeUp .6s ease forwards}
+.d1{animation-delay:3.8s}
+.d2{animation-delay:4s}
+.d3{animation-delay:4.2s}
+.d4{animation-delay:4.4s}
+.dotPulse{animation:dotPulse 1.2s ease-in-out infinite}
+
+@keyframes glowPulse{from{box-shadow:inset 0 0 0 1px rgba(255,214,140,.55),0 6px 16px rgba(255,90,20,.32)}to{box-shadow:inset 0 0 0 1px rgba(255,214,140,.55),0 8px 30px rgba(255,120,30,.7)}}
+@keyframes shimmer{from{background-position:150% 0}to{background-position:-100% 0}}
+@keyframes flameLick{from{transform:scaleY(.7) scaleX(.92);opacity:.7}to{transform:scaleY(1.25) scaleX(1.04);opacity:1}}
+@keyframes flicker{from{opacity:.65}to{opacity:1}}
+@keyframes flameDance{0%{transform:scale(1,.82) skewX(-3deg)}50%{transform:scale(.96,1.08) skewX(3deg)}100%{transform:scale(1.02,.9) skewX(-2deg)}}
+@keyframes glowBreath{from{opacity:.55;transform:scale(.95)}to{opacity:1;transform:scale(1.08)}}
+@keyframes floaty{from{transform:translateY(0) rotate(-1.5deg)}to{transform:translateY(-8px) rotate(1.5deg)}}
+@keyframes rise1{0%{transform:translate3d(0,0,0);opacity:0}10%{opacity:.95}100%{transform:translate3d(-30px,-105vh,0);opacity:0}}
+@keyframes rise2{0%{transform:translate3d(0,0,0);opacity:0}10%{opacity:.9}100%{transform:translate3d(45px,-105vh,0);opacity:0}}
+@keyframes rise3{0%{transform:translate3d(0,0,0);opacity:0}10%{opacity:.85}100%{transform:translate3d(-8px,-105vh,0);opacity:0}}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes jawU{0%{transform:rotate(-30deg)}22%{transform:rotate(-30deg)}26%{transform:rotate(0deg)}33%{transform:rotate(-26deg)}44%{transform:rotate(-26deg)}48%{transform:rotate(0deg)}55%{transform:rotate(-26deg)}65%{transform:rotate(-26deg)}69%{transform:rotate(0deg)}75%{transform:rotate(-5deg)}81%{transform:rotate(0deg)}87%{transform:rotate(-5deg)}100%{transform:rotate(0deg)}}
+@keyframes jawL{0%{transform:rotate(24deg)}22%{transform:rotate(24deg)}26%{transform:rotate(0deg)}33%{transform:rotate(20deg)}44%{transform:rotate(20deg)}48%{transform:rotate(0deg)}55%{transform:rotate(20deg)}65%{transform:rotate(20deg)}69%{transform:rotate(0deg)}75%{transform:rotate(4deg)}81%{transform:rotate(0deg)}87%{transform:rotate(4deg)}100%{transform:rotate(0deg)}}
+@keyframes burgerIn{from{transform:translateX(130px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes burgerOut{to{transform:translateX(-50px) scale(.1);opacity:0}}
+@keyframes bite{from{transform:scale(0)}to{transform:scale(1)}}
+@keyframes crumbA{0%{opacity:0;transform:translate(0,0)}15%{opacity:1}100%{opacity:0;transform:translate(-34px,-46px)}}
+@keyframes crumbB{0%{opacity:0;transform:translate(0,0)}15%{opacity:1}100%{opacity:0;transform:translate(-48px,10px)}}
+@keyframes crumbC{0%{opacity:0;transform:translate(0,0)}15%{opacity:1}100%{opacity:0;transform:translate(-20px,52px)}}
+@keyframes okPop{0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes dotPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,122,26,.7)}50%{box-shadow:0 0 0 8px rgba(255,122,26,0)}}
+
+@media (prefers-reduced-motion: reduce){
+  .gb-root *{animation-duration:.01ms !important;animation-delay:0s !important;animation-iteration-count:1 !important;scroll-behavior:auto !important}
+}
+</style>
+</helmet>
+
+<div class="gb-root" style="position:relative;height:100vh;min-height:560px;overflow:hidden;background:#0F0D0C;color:#F6EEE6;font-family:'Outfit',system-ui,sans-serif;display:flex;flex-direction:column">
+
+  <!-- ===================== PAGINA ===================== -->
+  <div class="scroll" style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;position:relative;z-index:2;padding-bottom:128px">
+
+    <!-- HERO -->
+    <header style="position:relative;overflow:hidden;background:radial-gradient(120% 70% at 50% 100%,rgba(255,90,20,.3),rgba(15,13,12,0) 62%),linear-gradient(180deg,#171210,#0F0D0C)">
+      <div style="max-width:1100px;margin:0 auto;padding:16px 16px 0;position:relative;z-index:2">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="width:42px;height:42px;border-radius:13px;background:linear-gradient(180deg,#FFC23D,#FF5A1F);display:inline-flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(255,90,20,.55)">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="#1A0C05" aria-hidden="true"><path d="M12 2c.5 3.2-1.2 4.8-2.6 6.5C8 10.200 7 11.600 7 13.700A5 5 0 0 0 12 19a5 5 0 0 0 5-5.300c0-2-1-3.200-1.800-4.300-.4 1.400-1.200 2.100-2 2.300.8-3.300-.3-6.400-1.200-9.700Z"></path></svg>
+            </span>
+            <span style="font-family:'Anton','Impact',sans-serif;font-size:26px;letter-spacing:.04em;line-height:1;text-transform:uppercase">Good <span style="color:#FF7A1A">Burger</span></span>
+          </div>
+          <span style="display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 14px;border-radius:999px;border:1px solid #3A3029;background:rgba(27,23,21,.8);font-size:13px;font-weight:600;color:#E9DDD0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFC23D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5.500" cy="17" r="3"></circle><circle cx="18.500" cy="17" r="3"></circle><path d="M8.500 17H14l3-8h-4M12 9l2 8M7 6h3"></path></svg>
+            Delivery e retirada
+          </span>
+        </div>
+
+        <p style="margin:26px 0 8px;font-size:13px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#FFC23D">Hamburgueria artesanal na brasa</p>
+        <h1 style="margin:0;font-family:'Anton','Impact',sans-serif;font-weight:400;font-size:46px;line-height:1.02;letter-spacing:.01em;text-transform:uppercase">Fogo na chapa.<br><span style="color:#FF7A1A">Sabor na mão.</span></h1>
+        <p style="margin:14px 0 0;max-width:420px;font-size:16px;line-height:1.5;color:#CBBDAE">Escolha, personalize e peça em poucos toques. Sem cadastro, sem enrolação.</p>
+
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:14px 18px;margin-top:22px">
+          <a class="fire-btn" href="#cardapio">
+            Ver cardápio
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A0C05" stroke-width="2.500" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"></path></svg>
+          </a>
+          <span style="display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#E9DDD0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFC23D" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+            Peça sem criar conta
+          </span>
+        </div>
+
+        <div style="position:relative;display:flex;justify-content:center;margin-top:14px;height:178px">
+          <div class="hero-glow" style="position:absolute;left:50%;top:20px;width:280px;height:150px;margin-left:-140px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,122,26,.7),rgba(255,90,20,0));filter:blur(14px)"></div>
+          <div class="floaty" style="position:relative;width:210px;margin-top:6px">
+            <svg viewBox="0 0 120 100" width="100%" aria-hidden="true">
+              <ellipse cx="60" cy="92" rx="46" ry="5" fill="#000" opacity=".4"></ellipse>
+              <path d="M16 78 H104 Q104 90 92 90 H28 Q16 90 16 78Z" fill="#C97420"></path>
+              <rect x="14" y="62" width="92" height="17" rx="8" fill="#4A2A1B"></rect>
+              <path d="M14 62 H106 L98 73 L86 65 L72 75 L60 65 L46 75 L32 65 L22 73Z" fill="#FFC93C"></path>
+              <rect x="18" y="54" width="84" height="8" rx="4" fill="#D8392B"></rect>
+              <path d="M12 54 q8 -8 16 0 t16 0 t16 0 t16 0 t16 0 t16 0 v5 H12Z" fill="#6DB33F"></path>
+              <path d="M14 50 C14 14 106 14 106 50Z" fill="#D9822B"></path>
+              <path d="M30 30 C40 20 60 18 78 22" stroke="#F6B766" stroke-width="3.500" fill="none" stroke-linecap="round" opacity=".7"></path>
+              <g fill="#F6E3B4"><ellipse cx="42" cy="28" rx="4" ry="2" transform="rotate(-20 42 28)"></ellipse><ellipse cx="62" cy="22" rx="4" ry="2"></ellipse><ellipse cx="80" cy="29" rx="4" ry="2" transform="rotate(20 80 29)"></ellipse><ellipse cx="52" cy="38" rx="4" ry="2" transform="rotate(10 52 38)"></ellipse><ellipse cx="72" cy="40" rx="4" ry="2" transform="rotate(-10 72 40)"></ellipse></g>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <svg viewBox="0 0 390 70" preserveAspectRatio="none" aria-hidden="true" style="display:block;width:100%;height:62px;margin-top:-18px;position:relative;z-index:1">
+        <defs><linearGradient id="gbFlameGrad" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#D42B26"></stop><stop offset=".55" stop-color="#FF7A1A"></stop><stop offset="1" stop-color="#FFC23D"></stop></linearGradient></defs>
+        <path class="fl" fill="url(#gbFlameGrad)" d="M0 70 C2 40 14 32 20 4 C26 32 38 40 40 70Z"></path>
+        <path class="fl" fill="url(#gbFlameGrad)" d="M42 70 C44 40 56 32 62 4 C68 32 80 40 82 70Z"></path>
+        <path class="fl" fill="url(#gbFlameGrad)" d="M84 70 C86 40 98 32 104 4 C110 32 122 40 124 70Z"></path>
+        <path class="fl" fill="url(#gbFlameGrad)" d="M126 70 C128 40 140 32 146 4 C152 32 164 40 166 70Z"></path>
+        <path class="fl" fill="url(#gbFlameGrad)" d="M168 70 C170 40 182 32 188 4 C194 32 206 40 208 70Z"></path>
+        <path class="fl" fill="url(#gbFlameGrad)" d="M210 70 C212 40 224 32 230 4 C236 32 248 40 250 70Z"></path>
+        <path class="fl" fill="url(#gbFlameGrad)" d="M252 70 C254 40 266 32 272 4 C278 32 290 40 292 70Z"></path>
+        <path class="fl" fill="url(#gbFlameGrad)" d="M294 70 C296 40 308 32 314 4 C320 32 332 40 334 70Z"></path>
+        <path class="fl" fill="url(#gbFlameGrad)" d="M336 70 C338 40 350 32 356 4 C362 32 374 40 376 70Z"></path>
+        <rect x="0" y="62" width="390" height="8" fill="#D42B26"></rect>
+      </svg>
+    </header>
+
+    <!-- CATEGORIAS (fixas ao rolar) -->
+    <nav aria-label="Categorias do cardápio" style="position:sticky;top:0;z-index:15;background:rgba(15,13,12,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid #2A231E">
+      <div class="hide-bar" style="max-width:1100px;margin:0 auto;display:flex;gap:10px;overflow-x:auto;padding:10px 16px">
+        <sc-for list="{{ cats }}" as="c" hint-placeholder-count="4">
+          <button class="{{ c.cls }}" aria-pressed="{{ c.pressed }}" onClick="{{ c.pick }}">{{ c.label }}</button>
+        </sc-for>
+      </div>
+    </nav>
+
+    <!-- CARDAPIO -->
+    <section id="cardapio" style="max-width:1100px;margin:0 auto;padding:6px 16px 0">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:20px 0 14px">
+        <h2 style="margin:0;font-family:'Anton','Impact',sans-serif;font-weight:400;font-size:30px;letter-spacing:.03em;text-transform:uppercase">{{ catTitle }}</h2>
+        <span style="font-size:14px;color:#BBAD9F">{{ catCount }}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
+        <sc-for list="{{ visible }}" as="it" hint-placeholder-count="4">
+          <div class="card" style="position:relative;display:flex;flex-direction:column;border-radius:20px;background:linear-gradient(180deg,#231E1A,#181412);border:1px solid #352D27;overflow:hidden">
+            <button onClick="{{ it.open }}" aria-label="{{ it.ariaOpen }}" style="display:flex;flex-direction:column;align-items:stretch;width:100%;padding:0;margin:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer">
+              <div style="position:relative;height:136px;display:flex;align-items:center;justify-content:center;background:radial-gradient(70% 80% at 50% 75%,rgba(255,122,26,.3),rgba(255,90,20,0) 72%)">
+                <sc-if value="{{ it.hasPhoto }}" hint-placeholder-val="{{ false }}">
+                  <img src="{{ it.photo }}" alt="{{ it.name }}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block">
+                  <div aria-hidden="true" style="position:absolute;left:0;right:0;bottom:0;height:46px;background:linear-gradient(0deg,#231E1A,rgba(35,30,26,0))"></div>
+                </sc-if>
+                <sc-if value="{{ it.hasTag }}" hint-placeholder-val="{{ false }}">
+                  <span style="position:absolute;top:10px;left:10px;z-index:2;padding:4px 10px;border-radius:999px;background:#D42B26;color:#FFF;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">{{ it.tag }}</span>
+                </sc-if>
+                <div class="art" style="width:132px;position:relative;z-index:1">
+                  <sc-if value="{{ it.isBurger }}" hint-placeholder-val="{{ true }}">
+                    <svg viewBox="0 0 120 100" width="100%" aria-hidden="true"><ellipse cx="60" cy="92" rx="46" ry="5" fill="#000" opacity=".4"></ellipse><path d="M16 78 H104 Q104 90 92 90 H28 Q16 90 16 78Z" fill="{{ it.bun }}"></path><rect x="14" y="62" width="92" height="17" rx="8" fill="{{ it.patty }}"></rect><path d="M14 62 H106 L98 73 L86 65 L72 75 L60 65 L46 75 L32 65 L22 73Z" fill="{{ it.cheese }}"></path><rect x="18" y="54" width="84" height="8" rx="4" fill="#D8392B"></rect><path d="M12 54 q8 -8 16 0 t16 0 t16 0 t16 0 t16 0 t16 0 v5 H12Z" fill="#6DB33F"></path><path d="M14 50 C14 14 106 14 106 50Z" fill="{{ it.bun }}"></path><path d="M30 30 C40 20 60 18 78 22" stroke="#FFFFFF" stroke-width="3.500" fill="none" stroke-linecap="round" opacity=".25"></path><g fill="#F6E3B4"><ellipse cx="42" cy="28" rx="4" ry="2" transform="rotate(-20 42 28)"></ellipse><ellipse cx="62" cy="22" rx="4" ry="2"></ellipse><ellipse cx="80" cy="29" rx="4" ry="2" transform="rotate(20 80 29)"></ellipse><ellipse cx="52" cy="38" rx="4" ry="2" transform="rotate(10 52 38)"></ellipse><ellipse cx="72" cy="40" rx="4" ry="2" transform="rotate(-10 72 40)"></ellipse></g></svg>
+                  </sc-if>
+                  <sc-if value="{{ it.isFries }}" hint-placeholder-val="{{ false }}">
+                    <svg viewBox="0 0 120 100" width="100%" aria-hidden="true"><ellipse cx="60" cy="94" rx="36" ry="4" fill="#000" opacity=".4"></ellipse><g fill="{{ it.c1 }}"><rect x="36" y="14" width="9" height="46" rx="3" transform="rotate(-14 40 60)"></rect><rect x="48" y="8" width="9" height="50" rx="3" transform="rotate(-6 52 60)"></rect><rect x="60" y="6" width="9" height="52" rx="3"></rect><rect x="72" y="10" width="9" height="48" rx="3" transform="rotate(8 76 60)"></rect><rect x="82" y="16" width="9" height="44" rx="3" transform="rotate(16 86 60)"></rect></g><path d="M34 50 q6 14 12 0 t12 0 t12 0 t12 0 v-6 H34Z" fill="{{ it.c2 }}"></path><path d="M30 52 H90 L84 92 H36Z" fill="#D42B26"></path><path d="M33 68 H87" stroke="#FFD08A" stroke-width="5" stroke-linecap="round"></path></svg>
+                  </sc-if>
+                  <sc-if value="{{ it.isRings }}" hint-placeholder-val="{{ false }}">
+                    <svg viewBox="0 0 120 100" width="100%" aria-hidden="true"><ellipse cx="60" cy="92" rx="40" ry="4" fill="#000" opacity=".4"></ellipse><circle cx="42" cy="62" r="19" fill="none" stroke="{{ it.c1 }}" stroke-width="13"></circle><circle cx="78" cy="62" r="19" fill="none" stroke="{{ it.c1 }}" stroke-width="13"></circle><circle cx="60" cy="38" r="19" fill="none" stroke="{{ it.c1 }}" stroke-width="13"></circle><circle cx="60" cy="38" r="19" fill="none" stroke="#F6D58A" stroke-width="3" stroke-dasharray="8 10" opacity=".7"></circle></svg>
+                  </sc-if>
+                  <sc-if value="{{ it.isCan }}" hint-placeholder-val="{{ false }}">
+                    <svg viewBox="0 0 120 100" width="100%" aria-hidden="true"><ellipse cx="60" cy="94" rx="26" ry="4" fill="#000" opacity=".4"></ellipse><rect x="40" y="10" width="40" height="80" rx="8" fill="{{ it.c1 }}"></rect><rect x="40" y="10" width="40" height="9" rx="4" fill="#CFC8C0"></rect><path d="M40 44 q10 -8 20 0 t20 0 v14 q-10 -8 -20 0 t-20 0Z" fill="#FFF3E0" opacity=".9"></path><rect x="46" y="26" width="5" height="52" rx="2.500" fill="#FFFFFF" opacity=".22"></rect></svg>
+                  </sc-if>
+                  <sc-if value="{{ it.isCup }}" hint-placeholder-val="{{ false }}">
+                    <svg viewBox="0 0 120 100" width="100%" aria-hidden="true"><ellipse cx="60" cy="94" rx="30" ry="4" fill="#000" opacity=".4"></ellipse><rect x="64" y="0" width="5" height="26" rx="2.500" fill="#FFC23D" transform="rotate(10 66 26)"></rect><path d="M34 26 H86 L80 90 H40Z" fill="{{ it.c1 }}"></path><path d="M36 26 q8 -17 24 -13 q18 -5 24 13Z" fill="{{ it.cream }}"></path><rect x="30" y="24" width="60" height="9" rx="4.500" fill="#EDE3D6"></rect><g fill="#FFFFFF" opacity=".3"><rect x="46" y="48" width="12" height="12" rx="3" transform="rotate(12 52 54)"></rect><rect x="64" y="60" width="12" height="12" rx="3" transform="rotate(-10 70 66)"></rect></g></svg>
+                  </sc-if>
+                  <sc-if value="{{ it.isBrownie }}" hint-placeholder-val="{{ false }}">
+                    <svg viewBox="0 0 120 100" width="100%" aria-hidden="true"><ellipse cx="60" cy="92" rx="44" ry="4" fill="#000" opacity=".4"></ellipse><rect x="22" y="58" width="76" height="32" rx="7" fill="#4A2A1A"></rect><path d="M22 66 H98" stroke="#6B3E27" stroke-width="3"></path><circle cx="60" cy="46" r="21" fill="{{ it.c1 }}"></circle><path d="M42 50 q18 -6 36 0 q-4 14 -8 6 q-6 12 -10 2 q-6 10 -10 0 q-6 8 -8 -8Z" fill="#2B140C"></path><circle cx="52" cy="38" r="5" fill="#FFFFFF" opacity=".35"></circle></svg>
+                  </sc-if>
+                </div>
+              </div>
+              <div style="padding:10px 12px 0">
+                <div style="font-size:16px;font-weight:700;line-height:1.2">{{ it.name }}</div>
+                <div style="margin-top:4px;font-size:13px;line-height:1.4;color:#BBAD9F;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;min-height:54px">{{ it.desc }}</div>
+              </div>
+              <div style="padding:8px 12px 12px;min-height:56px;display:flex;align-items:center">
+                <span style="font-family:'Anton','Impact',sans-serif;font-size:22px;letter-spacing:.03em;color:#FFC23D">{{ it.priceTxt }}</span>
+              </div>
+            </button>
+            <button class="fire-btn fire-sm" onClick="{{ it.quick }}" aria-label="{{ it.ariaAdd }}" style="position:absolute;right:10px;bottom:10px;z-index:3">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1A0C05" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+            </button>
+          </div>
+        </sc-for>
+      </div>
+      <p style="margin:18px 0 0;font-size:13px;color:#BBAD9F;line-height:1.5">Toque no <strong style="color:#FFC23D">+</strong> para adicionar na hora ou no item para escolher ponto da carne e adicionais.</p>
+    </section>
+
+    <!-- RODAPE -->
+    <footer style="max-width:1100px;margin:28px auto 0;padding:20px 16px 8px;border-top:1px solid #2A231E;font-size:13px;line-height:1.7;color:#BBAD9F">
+      <div style="font-family:'Anton','Impact',sans-serif;font-size:20px;letter-spacing:.05em;color:#F6EEE6;text-transform:uppercase">Good <span style="color:#FF7A1A">Burger</span></div>
+      <div>[ENDEREÇO DA LOJA]</div>
+      <div>[DIAS E HORÁRIOS DE FUNCIONAMENTO]</div>
+      <div>[@INSTAGRAM DA LOJA]</div>
+    </footer>
+  </div>
+
+  <!-- ===================== BRASAS ===================== -->
+  <div aria-hidden="true" style="position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:3">
+    <sc-for list="{{ embers }}" as="e" hint-placeholder-count="0">
+      <span class="ember {{ e.v }}" style="{{ e.style }}"></span>
+    </sc-for>
+  </div>
+
+  <!-- ===================== AVISO ===================== -->
+  <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+    <div class="toast" role="status" style="position:absolute;left:50%;bottom:98px;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:10px;max-width:calc(100% - 32px);padding:10px 16px;border-radius:999px;background:#241E1A;border:1px solid #FF7A1A;box-shadow:0 8px 28px rgba(0,0,0,.5),0 0 20px rgba(255,122,26,.35);font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFC23D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+      {{ toast }}
+    </div>
+  </sc-if>
+
+  <!-- ===================== CARRINHO FLUTUANTE ===================== -->
+  <div style="position:absolute;left:12px;right:12px;bottom:12px;max-width:560px;margin:0 auto;z-index:25">
+    <button class="fire-btn" onClick="{{ openCart }}" disabled="{{ cartEmpty }}" aria-label="{{ cartAria }}" style="width:100%;min-height:62px;justify-content:space-between;padding:0 16px;border-radius:20px">
+      <span style="display:flex;align-items:center;gap:12px">
+        <span style="position:relative;display:inline-flex">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1A0C05" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1 12H6L5 8Z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2"></path></svg>
+          <span style="position:absolute;top:-8px;right:-10px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#1A0C05;color:#FFC23D;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">{{ cartCount }}</span>
+        </span>
+        <span style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.15">
+          <span style="font-size:16px;font-weight:700">{{ cartLabel }}</span>
+          <span style="font-size:12px;font-weight:600;opacity:.8">{{ cartSub }}</span>
+        </span>
+      </span>
+      <span style="font-family:'Anton','Impact',sans-serif;font-size:24px;letter-spacing:.03em">{{ subtotalTxt }}</span>
+    </button>
+  </div>
+
+  <!-- ===================== SHEET DO ITEM ===================== -->
+  <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:40;display:flex;align-items:flex-end;justify-content:center">
+      <button class="backdrop" onClick="{{ closeItem }}" aria-label="Fechar" style="position:absolute;inset:0;width:100%;border:0;padding:0;background:rgba(5,3,2,.75);cursor:pointer"></button>
+      <div class="sheet" role="dialog" aria-modal="true" aria-label="{{ selView.name }}" style="position:relative;width:100%;max-width:560px;max-height:93%;display:flex;flex-direction:column;background:#16110E;border:1px solid #3A2C21;border-bottom:0;border-radius:28px 28px 0 0;overflow:hidden">
+        <div style="flex:1;min-height:0;overflow-y:auto">
+          <div style="position:relative;height:230px;display:flex;align-items:center;justify-content:center;background:radial-gradient(65% 85% at 50% 72%,rgba(255,122,26,.42),rgba(255,90,20,0) 72%),#1B1612">
+            <button class="icon-btn" onClick="{{ closeItem }}" aria-label="Fechar" style="position:absolute;top:12px;right:12px;z-index:2">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.500" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+            </button>
+            <sc-if value="{{ selView.hasPhoto }}" hint-placeholder-val="{{ false }}">
+              <img src="{{ selView.photo }}" alt="{{ selView.name }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block">
+              <div aria-hidden="true" style="position:absolute;left:0;right:0;bottom:0;height:70px;background:linear-gradient(0deg,#16110E,rgba(22,17,14,0))"></div>
+            </sc-if>
+            <div style="width:210px">
+              <sc-if value="{{ selView.isBurger }}" hint-placeholder-val="{{ true }}">
+                <svg viewBox="0 0 120 100" width="100%" aria-hidden="true"><ellipse cx="60" cy="92" rx="46" ry="5" fill="#000" opacity=".4"></ellipse><path d="M16 78 H104 Q104 90 92 90 H28 Q16 90 16 78Z" fill="{{ selView.bun }}"></path><rect x="14" y="62" width="92" height="17" rx="8" fill="{{ selView.patty }}"></rect><path d="M14 62 H106 L98 73 L86 65 L72 75 L60 65 L46 75 L32 65 L22 73Z" fill="{{ selView.cheese }}"></path><rect x="18" y="54" width="84" height="8" rx="4" fill="#D8392B"></rect><path d="M12 54 q8 -8 16 0 t16 0 t16 0 t16 0 t16 0 t16 0 v5 H12Z" fill="#6DB33F"></path><path d="M14 50 C14 14 106 14 106 50Z" fill="{{ selView.bun }}"></path><path d="M30 30 C40 20 60 18 78 22" stroke="#FFFFFF" stroke-width="3.500" fill="none" stroke-linecap="round" opacity=".25"></path><g fill="#F6E3B4"><ellipse cx="42" cy="28" rx="4" ry="2" transform="rotate(-20 42 28)"></ellipse><ellipse cx="62" cy="22" rx="4" ry="2"></ellipse><ellipse cx="80" cy="29" rx="4" ry="2" transform="rotate(20 80 29)"></ellipse><ellipse cx="52" cy="38" rx="4" ry="2" transform="rotate(10 52 38)"></ellipse><ellipse cx="72" cy="40" rx="4" ry="2" transform="rotate(-10 72 40)"></ellipse></g></svg>
+              </sc-if>
+              <sc-if value="{{ selView.isFries }}" hint-placeholder-val="{{ false }}">
+                <svg viewBox="0 0 120 100" width="100%" aria-hidden="true"><ellipse cx="60" cy="94" rx="36" ry="4" fill="#000" opacity=".4"></ellipse><g fill="{{ selView.c1 }}"><rect x="36" y="14" width="9" height="46" rx="3" transform="rotate(-14 40 60)"></rect><rect x="48" y="8" width="9" height="50" rx="3" transform="rotate(-6 52 60)"></rect><rect x="60" y="6" width="9" height="52" rx="3"></rect><rect x="72" y="10" width="9" height="48" rx="3" transform="rotate(8 76 60)"></rect><rect x="82" y="16" width="9" height="44" rx="3" transform="rotate(16 86 60)"></rect></g><path d="M34 50 q6 14 12 0 t12 0 t12 0 t12 0 v-6 H34Z" fill="{{ selView.c2 }}"></path><path d="M30 52 H90 L84 92 H36Z" fill="#D42B26"></path><path d="M33 68 H87" stroke="#FFD08A" stroke-width="5" stroke-linecap="round"></path></svg>
+              </sc-if>
+              <sc-if value="{{ selView.isRings }}" hint-placeholder-val="{{ false }}">
+                <svg viewBox="0 0 120 100" width="100%" aria-hidden="true"><ellipse cx="60" cy="92" rx="40" ry="4" fill="#000" opacity=".4"></ellipse><circle cx="42" cy="62" r="19" fill="none" stroke="{{ selView.c1 }}" stroke-width="13"></circle><circle cx="78" cy="62" r="19" fill="none" stroke="{{ selView.c1 }}" stroke-width="13"></circle><circle cx="60" cy="38" r="19" fill="none" stroke="{{ selView.c1 }}" stroke-width="13"></circle><circle cx="60" cy="38" r="19" fill="none" stroke="#F6D58A" stroke-width="3" stroke-dasharray="8 10" opacity=".7"></circle></svg>
+              </sc-if>
+              <sc-if value="{{ selView.isCan }}" hint-placeholder-val="{{ false }}">
+                <svg viewBox="0 0 120 100" width="100%" aria-hidden="true"><ellipse cx="60" cy="94" rx="26" ry="4" fill="#000" opacity=".4"></ellipse><rect x="40" y="10" width="40" height="80" rx="8" fill="{{ selView.c1 }}"></rect><rect x="40" y="10" width="40" height="9" rx="4" fill="#CFC8C0"></rect><path d="M40 44 q10 -8 20 0 t20 0 v14 q-10 -8 -20 0 t-20 0Z" fill="#FFF3E0" opacity=".9"></path><rect x="46" y="26" width="5" height="52" rx="2.500" fill="#FFFFFF" opacity=".22"></rect></svg>
+              </sc-if>
+              <sc-if value="{{ selView.isCup }}" hint-placeholder-val="{{ false }}">
+                <svg viewBox="0 0 120 100" width="100%" aria-hidden="true"><ellipse cx="60" cy="94" rx="30" ry="4" fill="#000" opacity=".4"></ellipse><rect x="64" y="0" width="5" height="26" rx="2.500" fill="#FFC23D" transform="rotate(10 66 26)"></rect><path d="M34 26 H86 L80 90 H40Z" fill="{{ selView.c1 }}"></path><path d="M36 26 q8 -17 24 -13 q18 -5 24 13Z" fill="{{ selView.cream }}"></path><rect x="30" y="24" width="60" height="9" rx="4.500" fill="#EDE3D6"></rect><g fill="#FFFFFF" opacity=".3"><rect x="46" y="48" width="12" height="12" rx="3" transform="rotate(12 52 54)"></rect><rect x="64" y="60" width="12" height="12" rx="3" transform="rotate(-10 70 66)"></rect></g></svg>
+              </sc-if>
+              <sc-if value="{{ selView.isBrownie }}" hint-placeholder-val="{{ false }}">
+                <svg viewBox="0 0 120 100" width="100%" aria-hidden="true"><ellipse cx="60" cy="92" rx="44" ry="4" fill="#000" opacity=".4"></ellipse><rect x="22" y="58" width="76" height="32" rx="7" fill="#4A2A1A"></rect><path d="M22 66 H98" stroke="#6B3E27" stroke-width="3"></path><circle cx="60" cy="46" r="21" fill="{{ selView.c1 }}"></circle><path d="M42 50 q18 -6 36 0 q-4 14 -8 6 q-6 12 -10 2 q-6 10 -10 0 q-6 8 -8 -8Z" fill="#2B140C"></path><circle cx="52" cy="38" r="5" fill="#FFFFFF" opacity=".35"></circle></svg>
+              </sc-if>
+            </div>
+          </div>
+
+          <div style="padding:18px 18px 8px">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+              <h3 style="margin:0;font-family:'Anton','Impact',sans-serif;font-weight:400;font-size:28px;line-height:1.1;letter-spacing:.03em;text-transform:uppercase">{{ selView.name }}</h3>
+              <span style="font-family:'Anton','Impact',sans-serif;font-size:24px;letter-spacing:.03em;color:#FFC23D;white-space:nowrap">{{ selView.priceTxt }}</span>
+            </div>
+            <p style="margin:8px 0 0;font-size:15px;line-height:1.5;color:#BBAD9F">{{ selView.desc }}</p>
+          </div>
+
+          <sc-if value="{{ selView.hasDoneness }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:14px 18px 4px">
+              <div style="font-size:15px;font-weight:700;margin-bottom:10px">Ponto da carne</div>
+              <div style="display:flex;gap:8px">
+                <sc-for list="{{ donenessOpts }}" as="d" hint-placeholder-count="3">
+                  <button class="{{ d.cls }}" aria-pressed="{{ d.on }}" onClick="{{ d.pick }}">{{ d.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ hasExtras }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:16px 18px 4px">
+              <div style="font-size:15px;font-weight:700;margin-bottom:10px">Adicionais</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ modalExtras }}" as="x" hint-placeholder-count="3">
+                  <button class="{{ x.cls }}" aria-pressed="{{ x.on }}" onClick="{{ x.toggle }}">
+                    <span style="display:flex;align-items:center;gap:12px">
+                      <span class="box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span>
+                      {{ x.name }}
+                    </span>
+                    <span style="font-weight:700;color:#FFC23D;white-space:nowrap">{{ x.priceTxt }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <div style="padding:16px 18px 22px">
+            <label class="lbl" for="gb-note">Alguma observação? (opcional)</label>
+            <textarea id="gb-note" class="field" placeholder="Ex.: sem cebola, molho à parte" value="{{ note }}" onChange="{{ setNote }}"></textarea>
+          </div>
+        </div>
+
+        <div style="flex:none;display:flex;align-items:center;gap:12px;padding:12px 16px 16px;border-top:1px solid #33271E;background:#16110E">
+          <div style="display:flex;align-items:center;gap:6px">
+            <button class="step-btn" onClick="{{ decQty }}" aria-label="Diminuir quantidade"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+            <span style="min-width:30px;text-align:center;font-size:20px;font-weight:700" aria-live="polite">{{ qty }}</span>
+            <button class="step-btn" onClick="{{ incQty }}" aria-label="Aumentar quantidade"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+          </div>
+          <button class="fire-btn" onClick="{{ addModal }}" style="flex:1;min-height:56px;justify-content:space-between;padding:0 18px">
+            <span>Adicionar</span>
+            <span style="font-family:'Anton','Impact',sans-serif;font-size:22px;letter-spacing:.03em">{{ modalTotalTxt }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===================== CARRINHO / CHECKOUT ===================== -->
+  <sc-if value="{{ hasSheet }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:45;display:flex;align-items:flex-end;justify-content:center">
+      <button class="backdrop" onClick="{{ closeSheet }}" aria-label="Fechar" style="position:absolute;inset:0;width:100%;border:0;padding:0;background:rgba(5,3,2,.78);cursor:pointer"></button>
+      <div class="sheet" role="dialog" aria-modal="true" aria-label="{{ sheetTitle }}" style="position:relative;width:100%;max-width:560px;max-height:94%;display:flex;flex-direction:column;background:#16110E;border:1px solid #3A2C21;border-bottom:0;border-radius:28px 28px 0 0;overflow:hidden">
+        <div style="flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 16px 12px;border-bottom:1px solid #2E241C">
+          <h3 style="margin:0;font-family:'Anton','Impact',sans-serif;font-weight:400;font-size:26px;letter-spacing:.04em;text-transform:uppercase">{{ sheetTitle }}</h3>
+          <button class="icon-btn" onClick="{{ closeSheet }}" aria-label="Fechar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.500" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+        </div>
+
+        <!-- vista: carrinho -->
+        <sc-if value="{{ sheetCart }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;min-height:0;overflow-y:auto;padding:14px 16px">
+            <sc-if value="{{ cartEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:36px 8px;text-align:center;color:#BBAD9F;font-size:15px">Seu carrinho está vazio. Volte ao cardápio e escolha seu burger.</div>
+            </sc-if>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <sc-for list="{{ cartLines }}" as="l" hint-placeholder-count="2">
+                <div style="padding:14px;border-radius:18px;background:#1D1815;border:1px solid #342B25">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+                    <div style="min-width:0">
+                      <div style="font-size:16px;font-weight:700;line-height:1.25">{{ l.name }}</div>
+                      <sc-if value="{{ l.hasDoneness }}" hint-placeholder-val="{{ true }}"><div style="margin-top:3px;font-size:13px;color:#FFC23D;font-weight:600">{{ l.doneness }}</div></sc-if>
+                      <sc-if value="{{ l.hasExtras }}" hint-placeholder-val="{{ false }}"><div style="margin-top:3px;font-size:13px;color:#BBAD9F">+ {{ l.extrasTxt }}</div></sc-if>
+                      <sc-if value="{{ l.hasNote }}" hint-placeholder-val="{{ false }}"><div style="margin-top:3px;font-size:13px;color:#BBAD9F;font-style:italic">Obs: {{ l.note }}</div></sc-if>
+                    </div>
+                    <button class="icon-btn" onClick="{{ l.remove }}" aria-label="{{ l.ariaRemove }}" style="width:40px;height:40px;border-radius:12px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF8A7A" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></button>
+                  </div>
+                  <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between">
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <button class="step-btn" onClick="{{ l.dec }}" aria-label="Diminuir quantidade"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+                      <span style="min-width:28px;text-align:center;font-size:18px;font-weight:700">{{ l.qty }}</span>
+                      <button class="step-btn" onClick="{{ l.inc }}" aria-label="Aumentar quantidade"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+                    </div>
+                    <span style="font-family:'Anton','Impact',sans-serif;font-size:22px;letter-spacing:.03em;color:#FFC23D">{{ l.totalTxt }}</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="flex:none;padding:14px 16px 16px;border-top:1px solid #2E241C;background:#16110E">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <span style="font-size:15px;color:#CBBDAE">Subtotal dos itens</span>
+              <span style="font-family:'Anton','Impact',sans-serif;font-size:26px;letter-spacing:.03em">{{ subtotalTxt }}</span>
+            </div>
+            <div style="display:flex;gap:10px">
+              <button class="opt" onClick="{{ closeSheet }}" style="flex:0 0 auto;padding:0 18px">Adicionar mais</button>
+              <button class="fire-btn" onClick="{{ goCheckout }}" disabled="{{ cartEmpty }}" style="flex:1">
+                Continuar
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A0C05" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+              </button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- vista: checkout -->
+        <sc-if value="{{ sheetCheckout }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1;min-height:0;overflow-y:auto;padding:14px 16px 20px">
+            <p style="margin:0 0 14px;font-size:14px;color:#BBAD9F;line-height:1.5">Sem cadastro. Só precisamos de poucos dados para o pedido chegar certinho.</p>
+
+            <div style="display:flex;gap:8px;margin-bottom:16px">
+              <button class="{{ optDelivery.cls }}" aria-pressed="{{ optDelivery.on }}" onClick="{{ optDelivery.pick }}" style="display:flex;align-items:center;justify-content:center;gap:8px">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5.500" cy="17" r="3"></circle><circle cx="18.500" cy="17" r="3"></circle><path d="M8.500 17H14l3-8h-4M12 9l2 8M7 6h3"></path></svg>
+                Entrega
+              </button>
+              <button class="{{ optPickup.cls }}" aria-pressed="{{ optPickup.on }}" onClick="{{ optPickup.pick }}" style="display:flex;align-items:center;justify-content:center;gap:8px">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10 5.500 4h13L20 10M4 10h16v10H4V10ZM9 20v-6h6v6"></path></svg>
+                Retirada
+              </button>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div>
+                <label class="lbl" for="gb-name">Seu nome</label>
+                <input id="gb-name" class="{{ errName }}" type="text" autocomplete="name" placeholder="Como podemos te chamar?" value="{{ name }}" onChange="{{ setName }}">
+              </div>
+              <div>
+                <label class="lbl" for="gb-phone">Telefone (com DDD)</label>
+                <input id="gb-phone" class="{{ errPhone }}" type="tel" inputmode="tel" autocomplete="tel" placeholder="(00) 00000-0000" value="{{ phone }}" onChange="{{ setPhone }}">
+              </div>
+              <sc-if value="{{ isDelivery }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;flex-direction:column;gap:12px">
+                  <div style="display:flex;gap:10px">
+                    <div style="flex:1;min-width:0">
+                      <label class="lbl" for="gb-street">Rua / avenida</label>
+                      <input id="gb-street" class="{{ errStreet }}" type="text" autocomplete="address-line1" placeholder="Nome da rua" value="{{ street }}" onChange="{{ setStreet }}">
+                    </div>
+                    <div style="flex:0 0 92px">
+                      <label class="lbl" for="gb-num">Número</label>
+                      <input id="gb-num" class="{{ errNum }}" type="text" inputmode="numeric" placeholder="Nº" value="{{ num }}" onChange="{{ setNum }}">
+                    </div>
+                  </div>
+                  <div>
+                    <label class="lbl" for="gb-hood">Bairro</label>
+                    <input id="gb-hood" class="{{ errHood }}" type="text" placeholder="Seu bairro" value="{{ hood }}" onChange="{{ setHood }}">
+                  </div>
+                  <div>
+                    <label class="lbl" for="gb-comp">Complemento ou referência (opcional)</label>
+                    <input id="gb-comp" class="field" type="text" placeholder="Apto, bloco, ponto de referência" value="{{ comp }}" onChange="{{ setComp }}">
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+
+            <div style="margin-top:18px">
+              <div style="font-size:15px;font-weight:700;margin-bottom:10px">Pagamento na {{ payWhen }}</div>
+              <div style="display:flex;gap:8px">
+                <sc-for list="{{ payOpts }}" as="p" hint-placeholder-count="3">
+                  <button class="{{ p.cls }}" aria-pressed="{{ p.on }}" onClick="{{ p.pick }}">{{ p.label }}</button>
+                </sc-for>
+              </div>
+              <sc-if value="{{ showChange }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:12px">
+                  <label class="lbl" for="gb-change">Troco para quanto? (opcional)</label>
+                  <input id="gb-change" class="field" type="text" inputmode="decimal" placeholder="Ex.: 100" value="{{ change }}" onChange="{{ setChange }}">
+                </div>
+              </sc-if>
+            </div>
+
+            <div style="margin-top:20px;padding:14px;border-radius:18px;background:#1D1815;border:1px solid #342B25;display:flex;flex-direction:column;gap:8px;font-size:15px">
+              <div style="display:flex;justify-content:space-between"><span style="color:#CBBDAE">Subtotal</span><span>{{ subtotalTxt }}</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:#CBBDAE">Entrega</span><span>{{ feeTxt }}</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;padding-top:8px;border-top:1px dashed #4A3E35"><span style="font-weight:700">Total</span><span style="font-family:'Anton','Impact',sans-serif;font-size:28px;letter-spacing:.03em;color:#FFC23D">{{ totalTxt }}</span></div>
+            </div>
+
+            <sc-if value="{{ showError }}" hint-placeholder-val="{{ false }}">
+              <p role="alert" style="margin:14px 0 0;padding:10px 14px;border-radius:12px;background:rgba(212,43,38,.18);border:1px solid #FF6B5E;color:#FFD2CC;font-size:14px;line-height:1.4">Falta preencher os campos marcados em vermelho para finalizar.</p>
+            </sc-if>
+          </div>
+          <div style="flex:none;padding:12px 16px 16px;border-top:1px solid #2E241C;background:#16110E;display:flex;gap:10px">
+            <button class="icon-btn" onClick="{{ backToCart }}" aria-label="Voltar ao carrinho" style="width:56px;height:56px;border-radius:16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></button>
+            <sc-if value="{{ valid }}" hint-placeholder-val="{{ false }}">
+              <a class="fire-btn" href="{{ waUrl }}" target="_blank" rel="noopener" onClick="{{ confirmOrder }}" style="flex:1;min-height:56px">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1A0C05" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.500 11.500A8.500 8.500 0 0 1 8.200 19.100L3.500 20.500l1.400-4.600A8.500 8.500 0 1 1 20.500 11.500Z"></path><path d="M9 9.500c.3 2.200 2.300 4.400 4.800 5l1.400-1.300-1.800-1-.9.800c-.8-.4-1.600-1.200-2-2l.8-.9-1-1.800L9 9.500Z"></path></svg>
+                Confirmar pedido
+              </a>
+            </sc-if>
+            <sc-if value="{{ invalid }}" hint-placeholder-val="{{ true }}">
+              <button class="fire-btn" onClick="{{ tryConfirm }}" style="flex:1;min-height:56px">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1A0C05" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.500 11.500A8.500 8.500 0 0 1 8.200 19.100L3.500 20.500l1.400-4.600A8.500 8.500 0 1 1 20.500 11.500Z"></path><path d="M9 9.500c.3 2.200 2.300 4.400 4.800 5l1.400-1.300-1.800-1-.9.800c-.8-.4-1.600-1.200-2-2l.8-.9-1-1.800L9 9.500Z"></path></svg>
+                Confirmar pedido
+              </button>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===================== SUCESSO: BOCA MORDENDO ===================== -->
+  <sc-if value="{{ success }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:60;overflow-y:auto;background:radial-gradient(90% 55% at 50% 30%,rgba(255,90,20,.3),rgba(15,13,12,0) 70%),#0F0D0C">
+      <div style="max-width:480px;margin:0 auto;padding:28px 20px 36px;display:flex;flex-direction:column;align-items:center;text-align:center">
+        <svg viewBox="0 0 300 240" width="100%" style="max-width:300px" role="img" aria-label="Uma boca mordendo um hambúrguer">
+          <defs>
+            <mask id="gbBiteMask" maskUnits="userSpaceOnUse" x="0" y="0" width="300" height="240">
+              <rect x="0" y="0" width="300" height="240" fill="#fff"></rect>
+              <circle class="bite" style="animation-delay:1.05s" cx="164" cy="104" r="22" fill="#000"></circle>
+              <circle class="bite" style="animation-delay:2s" cx="160" cy="134" r="24" fill="#000"></circle>
+              <circle class="bite" style="animation-delay:2.95s" cx="172" cy="118" r="32" fill="#000"></circle>
+            </mask>
+          </defs>
+          <ellipse cx="150" cy="212" rx="110" ry="9" fill="#000" opacity=".35"></ellipse>
+          <path d="M24 100 L190 104 L188 142 L24 146Z" fill="#2A0A07"></path>
+          <g class="burgerIn">
+            <g mask="url(#gbBiteMask)">
+              <g transform="translate(150 70) scale(.95)">
+                <path d="M16 78 H104 Q104 90 92 90 H28 Q16 90 16 78Z" fill="#C97420"></path>
+                <rect x="14" y="62" width="92" height="17" rx="8" fill="#4A2A1B"></rect>
+                <path d="M14 62 H106 L98 73 L86 65 L72 75 L60 65 L46 75 L32 65 L22 73Z" fill="#FFC93C"></path>
+                <rect x="18" y="54" width="84" height="8" rx="4" fill="#D8392B"></rect>
+                <path d="M12 54 q8 -8 16 0 t16 0 t16 0 t16 0 t16 0 t16 0 v5 H12Z" fill="#6DB33F"></path>
+                <path d="M14 50 C14 14 106 14 106 50Z" fill="#D9822B"></path>
+                <g fill="#F6E3B4"><ellipse cx="42" cy="28" rx="4" ry="2" transform="rotate(-20 42 28)"></ellipse><ellipse cx="62" cy="22" rx="4" ry="2"></ellipse><ellipse cx="80" cy="29" rx="4" ry="2" transform="rotate(20 80 29)"></ellipse><ellipse cx="52" cy="38" rx="4" ry="2" transform="rotate(10 52 38)"></ellipse><ellipse cx="72" cy="40" rx="4" ry="2" transform="rotate(-10 72 40)"></ellipse></g>
+              </g>
+            </g>
+          </g>
+          <g class="jawL">
+            <path d="M22 124 L186 124 C190 124 194 130 194 140 C190 168 160 186 110 186 C52 186 20 164 22 124Z" fill="#D42B26" stroke="#7F140F" stroke-width="3" stroke-linejoin="round"></path>
+            <path d="M60 152 C90 140 140 140 172 152 C150 166 90 166 60 152Z" fill="#E8695C"></path>
+            <rect x="62" y="124" width="124" height="14" rx="4" fill="#FFF6E8"></rect>
+            <path d="M82 124v14M102 124v14M122 124v14M142 124v14M162 124v14" stroke="#D9C9B0" stroke-width="2"></path>
+          </g>
+          <g class="jawU">
+            <path d="M22 118 C18 80 48 56 110 56 C160 56 192 74 194 104 C194 112 190 118 186 118 Z" fill="#D42B26" stroke="#7F140F" stroke-width="3" stroke-linejoin="round"></path>
+            <path d="M50 82 C70 66 100 64 130 66" stroke="#FF8A7A" stroke-width="4" fill="none" stroke-linecap="round" opacity=".75"></path>
+            <rect x="62" y="104" width="124" height="14" rx="4" fill="#FFF6E8"></rect>
+            <path d="M82 104v14M102 104v14M122 104v14M142 104v14M162 104v14" stroke="#D9C9B0" stroke-width="2"></path>
+          </g>
+          <g fill="#E3A22A">
+            <circle class="crumb ca" style="animation-delay:1.1s" cx="168" cy="112" r="3"></circle>
+            <circle class="crumb cb" style="animation-delay:1.1s" cx="168" cy="120" r="2.500"></circle>
+            <circle class="crumb cc" style="animation-delay:2.05s" cx="164" cy="128" r="3"></circle>
+            <circle class="crumb ca" style="animation-delay:2.05s" cx="166" cy="118" r="2.500"></circle>
+            <circle class="crumb cb" style="animation-delay:3s" cx="172" cy="110" r="3"></circle>
+            <circle class="crumb cc" style="animation-delay:3s" cx="170" cy="126" r="2.500"></circle>
+          </g>
+          <g class="okPop">
+            <circle cx="244" cy="62" r="24" fill="#FFC23D" stroke="#1A0C05" stroke-width="3"></circle>
+            <path d="M233 62l8 8 14-16" stroke="#1A0C05" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path>
+          </g>
+        </svg>
+
+        <h2 class="fadeUp d1" style="margin:6px 0 0;font-family:'Anton','Impact',sans-serif;font-weight:400;font-size:38px;line-height:1.05;letter-spacing:.03em;text-transform:uppercase">Pedido <span style="color:#FF7A1A">confirmado!</span></h2>
+        <p class="fadeUp d2" style="margin:12px 0 0;font-size:16px;line-height:1.5;color:#CBBDAE">Enviamos o resumo do pedido {{ orderNoTxt }} para o WhatsApp da Good Burger. Se a conversa não abriu, toque em reabrir abaixo e envie a mensagem.</p>
+
+        <div class="fadeUp d3" style="width:100%;margin-top:20px;padding:16px;border-radius:20px;background:#1B1715;border:1px solid #3A3029;text-align:left;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <span style="font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#FFC23D">{{ etaLabel }}</span>
+            <span style="font-family:'Anton','Impact',sans-serif;font-size:24px;letter-spacing:.03em">{{ etaTxt }}</span>
+          </div>
+          <div style="font-size:14px;line-height:1.45;color:#CBBDAE"><span style="color:#F6EEE6;font-weight:600">{{ modeLabel }}:</span> {{ addrTxt }}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:14px"><span style="color:#CBBDAE">Total do pedido</span><span style="font-weight:700;color:#FFC23D">{{ totalTxt }}</span></div>
+          <ol style="list-style:none;margin:4px 0 0;padding:0;display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:12px;font-weight:600">
+            <li style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;color:#F6EEE6"><span style="width:14px;height:14px;border-radius:50%;background:#FFC23D"></span>Recebido</li>
+            <li style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;color:#F6EEE6"><span class="dotPulse" style="width:14px;height:14px;border-radius:50%;background:#FF7A1A"></span>Na chapa</li>
+            <li style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;color:#8F8176"><span style="width:14px;height:14px;border-radius:50%;border:2px solid #5A4C42"></span>{{ lastStep }}</li>
+          </ol>
+        </div>
+
+        <div class="fadeUp d4" style="width:100%;margin-top:20px;display:flex;flex-direction:column;gap:10px">
+          <a class="fire-btn" href="{{ waUrl }}" target="_blank" rel="noopener" style="width:100%">Reabrir WhatsApp</a>
+          <button class="opt" onClick="{{ newOrder }}" style="width:100%;flex:none">Fazer um novo pedido</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"whatsapp":{"editor":"text","default":"5521999999999","section":"Loja"},"deliveryFee":{"editor":"float","default":6,"min":0,"max":30,"step":0.5,"unit":"R$","section":"Loja"},"eta":{"editor":"text","default":"35 a 50 min","section":"Loja"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      cat: 'burgers', sel: null, doneness: 'Ao ponto', extras: {}, qty: 1, note: '',
+      cart: [], sheet: null, mode: 'delivery',
+      name: '', phone: '', street: '', num: '', hood: '', comp: '', pay: 'pix', change: '',
+      touched: false, success: false, toast: '',
+      orderNo: 1000 + Math.floor(Math.random() * 9000)
+    };
+    this.toastTimer = null;
+
+    this.CATS = [
+      { id: 'burgers', label: 'Hambúrgueres', title: 'Hambúrgueres' },
+      { id: 'sides', label: 'Acompanhamentos', title: 'Acompanhamentos' },
+      { id: 'drinks', label: 'Bebidas', title: 'Bebidas' },
+      { id: 'desserts', label: 'Sobremesas', title: 'Sobremesas' }
+    ];
+
+    const B = { bun: '#D9822B', patty: '#4A2A1B', cheese: '#FFC93C' };
+    this.MENU = [
+      Object.assign({ id: 'b1', cat: 'burgers', photo: './assets/5cbf94c891f0d2fef0be9427c89bc245.jpg', kind: 'burger', doneness: true, name: 'Good Classic', desc: 'Blend 160 g, cheddar, alface, tomate e molho da casa no pão brioche.', price: 28.9, tag: '' }, B),
+      Object.assign({ id: 'b2', cat: 'burgers', photo: './assets/bcdea1e49844c3e404d9d0314720d176.jpg', kind: 'burger', doneness: true, name: 'Brasa Bacon', desc: 'Blend 160 g, bacon crocante, cheddar e cebola caramelizada.', price: 34.9, tag: 'Destaque' }, B, { bun: '#C97420' }),
+      Object.assign({ id: 'b3', cat: 'burgers', photo: './assets/3e90a9be6ecaa4f9ef7d84289544d6fd.jpg', kind: 'burger', doneness: true, name: 'Fire Smash', desc: 'Dois smashes de 90 g, cheddar duplo, picles e molho defumado.', price: 36.9, tag: '' }, B, { bun: '#C97420', patty: '#3B2014' }),
+      Object.assign({ id: 'b4', cat: 'burgers', photo: './assets/474986ab10523a1ce96781c08794e907.jpg', kind: 'burger', doneness: true, name: 'Inferno Picante', desc: 'Blend 160 g, queijo pepper jack, jalapeño e maionese de pimenta.', price: 35.9, tag: 'Picante' }, B, { patty: '#3B1F14', cheese: '#F2E4B8' }),
+      Object.assign({ id: 'b5', cat: 'burgers', photo: './assets/9d3567f889a68efa0359e536c991a562.jpg', kind: 'burger', doneness: true, name: 'Duplo Grill', desc: 'Dois blends de 160 g, queijo prato, bacon, ovo e barbecue.', price: 42.9, tag: 'Destaque' }, B, { bun: '#B96A1C' }),
+      Object.assign({ id: 'b6', cat: 'burgers', photo: './assets/3e71540946e3668c8d8ae8aa494f8d70.jpg', kind: 'burger', doneness: false, name: 'Veggie Chama', desc: 'Burger de grão-de-bico, rúcula, tomate seco e queijo.', price: 31.9, tag: '' }, B, { patty: '#6B7A3A', cheese: '#F2E4B8' }),
+      { id: 's1', cat: 'sides', kind: 'fries', doneness: false, name: 'Batata Crocante', desc: 'Porção de batata frita sequinha com sal da casa.', price: 18.9, c1: '#F2B632', c2: 'none', tag: '' },
+      { id: 's2', cat: 'sides', kind: 'fries', doneness: false, name: 'Batata Cheddar e Bacon', desc: 'Batata frita coberta com cheddar cremoso e bacon.', price: 26.9, c1: '#F2B632', c2: '#F5A524', tag: 'Destaque' },
+      { id: 's3', cat: 'sides', kind: 'rings', doneness: false, name: 'Onion Rings', desc: 'Anéis de cebola empanados e crocantes, com molho.', price: 21.9, c1: '#E0A030', tag: '' },
+      { id: 'd1', cat: 'drinks', kind: 'can', doneness: false, name: 'Refrigerante Cola', desc: 'Lata 350 ml, gelada.', price: 6.5, c1: '#B3261E', tag: '' },
+      { id: 'd2', cat: 'drinks', kind: 'can', doneness: false, name: 'Guaraná', desc: 'Lata 350 ml, gelada.', price: 6.5, c1: '#2F8F4E', tag: '' },
+      { id: 'd3', cat: 'drinks', kind: 'cup', doneness: false, name: 'Suco de Laranja', desc: 'Natural, 500 ml, feito na hora.', price: 9.9, c1: '#FF9A1F', cream: 'none', tag: '' },
+      { id: 'd4', cat: 'drinks', kind: 'cup', doneness: false, name: 'Limonada Suíça', desc: 'Limão batido com leite condensado, 500 ml.', price: 11.9, c1: '#B6D96A', cream: 'none', tag: '' },
+      { id: 'x1', cat: 'desserts', kind: 'brownie', doneness: false, name: 'Brownie com Sorvete', desc: 'Brownie quentinho de chocolate com bola de sorvete de creme.', price: 19.9, c1: '#FFF1D6', tag: 'Destaque' },
+      { id: 'x2', cat: 'desserts', kind: 'brownie', doneness: false, name: 'Petit Gâteau', desc: 'Bolinho de chocolate com centro cremoso e sorvete.', price: 21.9, c1: '#F3D9B1', tag: '' },
+      { id: 'x3', cat: 'desserts', kind: 'cup', doneness: false, name: 'Milk-shake de Chocolate', desc: 'Sorvete batido com chocolate, chantilly por cima.', price: 17.9, c1: '#6B3B2A', cream: '#FFF3E0', tag: '' }
+    ];
+
+    this.EXTRAS = {
+      burgers: [
+        { id: 'bacon', name: 'Bacon crocante', price: 5 },
+        { id: 'cheddar', name: 'Cheddar extra', price: 4 },
+        { id: 'egg', name: 'Ovo na chapa', price: 3 },
+        { id: 'onion', name: 'Cebola caramelizada', price: 3.5 },
+        { id: 'sauce', name: 'Molho da casa', price: 2.5 },
+        { id: 'patty', name: 'Hambúrguer extra', price: 9 }
+      ],
+      sides: [
+        { id: 'cheddar', name: 'Molho cheddar', price: 3.5 },
+        { id: 'bbq', name: 'Molho barbecue', price: 2.5 },
+        { id: 'bacon', name: 'Farofa de bacon', price: 4 }
+      ],
+      drinks: [
+        { id: 'noice', name: 'Sem gelo', price: 0 },
+        { id: 'lemon', name: 'Com limão', price: 0 }
+      ],
+      desserts: [
+        { id: 'sauce', name: 'Calda de chocolate extra', price: 3 },
+        { id: 'cream', name: 'Chantilly extra', price: 2.5 }
+      ]
+    };
+
+    this.embers = Array.from({ length: 16 }, (_, i) => {
+      const r = (n) => { const x = Math.sin(i * 97.13 + n * 13.7) * 10000; return x - Math.floor(x); };
+      const size = 3 + Math.round(r(1) * 4);
+      return {
+        v: 'r' + ((i % 3) + 1),
+        style: 'left:' + Math.round(r(2) * 100) + '%;width:' + size + 'px;height:' + size + 'px;animation-duration:' + (7 + r(3) * 7).toFixed(1) + 's;animation-delay:-' + (r(4) * 10).toFixed(1) + 's;'
+      };
+    });
+  }
+
+  fmt(v) { return 'R$ ' + v.toFixed(2).replace('.', ','); }
+
+  showToast(msg) {
+    this.setState({ toast: msg });
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => this.setState({ toast: '' }), 1900);
+  }
+
+  addToCart(item, doneness, extraIds, qty, note) {
+    const ex = (this.EXTRAS[item.cat] || []).filter((e) => extraIds.indexOf(e.id) >= 0);
+    const unit = item.price + ex.reduce((a, e) => a + e.price, 0);
+    const cleanNote = (note || '').trim();
+    const dn = item.doneness ? doneness : '';
+    const key = [item.id, dn, extraIds.slice().sort().join('+'), cleanNote].join('|');
+    const cart = this.state.cart.slice();
+    const idx = cart.findIndex((l) => l.key === key);
+    if (idx >= 0) {
+      cart[idx] = Object.assign({}, cart[idx], { qty: cart[idx].qty + qty });
+    } else {
+      cart.push({ key: key, id: item.id, name: item.name, doneness: dn, extras: ex.map((e) => e.name), note: cleanNote, qty: qty, unit: unit });
+    }
+    return cart;
+  }
+
+  renderVals() {
+    const s = this.state;
+    const fmt = (v) => this.fmt(v);
+    const fee = Number(this.props.deliveryFee ?? 6);
+    const eta = String(this.props.eta ?? '35 a 50 min');
+    const waNum = String(this.props.whatsapp ?? '5521999999999').replace(/\D/g, '');
+    const delivery = s.mode === 'delivery';
+    const set = (k) => (e) => this.setState({ [k]: e.target.value });
+
+    /* ---- categorias e cardapio ---- */
+    const cats = this.CATS.map((c) => ({
+      id: c.id, label: c.label, pressed: s.cat === c.id,
+      cls: 'chip' + (s.cat === c.id ? ' on' : ''),
+      pick: () => this.setState({ cat: c.id })
+    }));
+    const curCat = this.CATS.find((c) => c.id === s.cat) || this.CATS[0];
+    const visible = this.MENU.filter((i) => i.cat === s.cat).map((i) => Object.assign({}, i, {
+      priceTxt: fmt(i.price),
+      hasTag: !!i.tag, hasPhoto: !!i.photo,
+      isBurger: i.kind === 'burger' && !i.photo, isFries: i.kind === 'fries', isRings: i.kind === 'rings',
+      isCan: i.kind === 'can', isCup: i.kind === 'cup', isBrownie: i.kind === 'brownie',
+      ariaOpen: 'Personalizar ' + i.name,
+      ariaAdd: 'Adicionar ' + i.name + ' ao carrinho',
+      open: () => this.setState({ sel: i.id, doneness: 'Ao ponto', extras: {}, qty: 1, note: '' }),
+      quick: () => {
+        const cart = this.addToCart(i, 'Ao ponto', [], 1, '');
+        this.setState({ cart: cart });
+        this.showToast(i.name + ' no carrinho');
+      }
+    }));
+
+    /* ---- sheet do item ---- */
+    const selItem = s.sel ? this.MENU.find((i) => i.id === s.sel) : null;
+    let selView = { name: '', desc: '', priceTxt: '', hasDoneness: false, hasPhoto: false, photo: '', isBurger: false, isFries: false, isRings: false, isCan: false, isCup: false, isBrownie: false, bun: '#D9822B', patty: '#4A2A1B', cheese: '#FFC93C', c1: '#F2B632', c2: 'none', cream: 'none' };
+    let modalExtras = [];
+    let donenessOpts = [];
+    let modalTotalTxt = fmt(0);
+    if (selItem) {
+      selView = Object.assign({}, selView, selItem, {
+        priceTxt: fmt(selItem.price), hasDoneness: !!selItem.doneness,
+        hasPhoto: !!selItem.photo,
+        isBurger: selItem.kind === 'burger' && !selItem.photo, isFries: selItem.kind === 'fries', isRings: selItem.kind === 'rings',
+        isCan: selItem.kind === 'can', isCup: selItem.kind === 'cup', isBrownie: selItem.kind === 'brownie'
+      });
+      const list = this.EXTRAS[selItem.cat] || [];
+      modalExtras = list.map((e) => {
+        const on = !!s.extras[e.id];
+        return {
+          id: e.id, name: e.name, on: on, cls: 'row' + (on ? ' on' : ''),
+          priceTxt: e.price > 0 ? '+ ' + fmt(e.price) : 'Grátis',
+          toggle: () => { const nx = Object.assign({}, s.extras); nx[e.id] = !nx[e.id]; this.setState({ extras: nx }); }
+        };
+      });
+      donenessOpts = ['Mal passada', 'Ao ponto', 'Bem passada'].map((d) => ({
+        label: d, on: s.doneness === d, cls: 'opt' + (s.doneness === d ? ' on' : ''),
+        pick: () => this.setState({ doneness: d })
+      }));
+      const extraSum = list.filter((e) => s.extras[e.id]).reduce((a, e) => a + e.price, 0);
+      modalTotalTxt = fmt((selItem.price + extraSum) * s.qty);
+    }
+    const addModal = () => {
+      if (!selItem) return;
+      const ids = Object.keys(s.extras).filter((k) => s.extras[k]);
+      const cart = this.addToCart(selItem, s.doneness, ids, s.qty, s.note);
+      this.setState({ cart: cart, sel: null });
+      this.showToast(s.qty + 'x ' + selItem.name + ' no carrinho');
+    };
+
+    /* ---- carrinho ---- */
+    const count = s.cart.reduce((a, l) => a + l.qty, 0);
+    const subtotal = s.cart.reduce((a, l) => a + l.unit * l.qty, 0);
+    const feeV = delivery ? fee : 0;
+    const total = subtotal + feeV;
+    const cartEmpty = count === 0;
+    const updateQty = (key, d) => {
+      const cart = s.cart.map((l) => (l.key === key ? Object.assign({}, l, { qty: l.qty + d }) : l)).filter((l) => l.qty > 0);
+      this.setState({ cart: cart });
+    };
+    const cartLines = s.cart.map((l) => ({
+      name: l.name, doneness: l.doneness, note: l.note, qty: l.qty,
+      hasDoneness: !!l.doneness, hasExtras: l.extras.length > 0, hasNote: !!l.note,
+      extrasTxt: l.extras.join(', '),
+      totalTxt: fmt(l.unit * l.qty),
+      ariaRemove: 'Remover ' + l.name,
+      inc: () => updateQty(l.key, 1),
+      dec: () => updateQty(l.key, -1),
+      remove: () => this.setState({ cart: s.cart.filter((x) => x.key !== l.key) })
+    }));
+
+    /* ---- checkout ---- */
+    const payLabels = { pix: 'Pix', card: 'Cartão', cash: 'Dinheiro' };
+    const payOpts = ['pix', 'card', 'cash'].map((id) => ({
+      label: payLabels[id], on: s.pay === id, cls: 'opt' + (s.pay === id ? ' on' : ''),
+      pick: () => this.setState({ pay: id })
+    }));
+    const miss = {
+      name: !s.name.trim(),
+      phone: s.phone.replace(/\D/g, '').length < 10,
+      street: delivery && !s.street.trim(),
+      num: delivery && !s.num.trim(),
+      hood: delivery && !s.hood.trim()
+    };
+    const valid = !(miss.name || miss.phone || miss.street || miss.num || miss.hood);
+    const err = (k) => (s.touched && miss[k] ? 'field err' : 'field');
+
+    const addrTxt = delivery
+      ? (s.street.trim() + ', ' + s.num.trim() + ' - ' + s.hood.trim())
+      : 'Retire seu pedido no balcão da Good Burger';
+
+    /* ---- mensagem do WhatsApp ---- */
+    const L = [];
+    L.push('*NOVO PEDIDO - GOOD BURGER*');
+    L.push('Pedido #' + s.orderNo);
+    L.push('');
+    L.push('*ITENS*');
+    s.cart.forEach((l) => {
+      L.push(l.qty + 'x ' + l.name + (l.doneness ? ' (' + l.doneness + ')' : ''));
+      if (l.extras.length) L.push('   Adicionais: ' + l.extras.join(', '));
+      if (l.note) L.push('   Obs: ' + l.note);
+      L.push('   ' + fmt(l.unit * l.qty));
+    });
+    L.push('');
+    L.push('Subtotal: ' + fmt(subtotal));
+    L.push(delivery ? 'Entrega: ' + fmt(fee) : 'Retirada na loja: grátis');
+    L.push('*TOTAL: ' + fmt(total) + '*');
+    L.push('');
+    L.push('*CLIENTE*');
+    L.push('Nome: ' + s.name.trim());
+    L.push('Telefone: ' + s.phone.trim());
+    L.push('');
+    if (delivery) {
+      L.push('*ENDEREÇO DE ENTREGA*');
+      L.push(s.street.trim() + ', ' + s.num.trim() + ' - ' + s.hood.trim());
+      if (s.comp.trim()) L.push('Compl.: ' + s.comp.trim());
+    } else {
+      L.push('*RETIRADA NA LOJA*');
+    }
+    L.push('');
+    L.push('*PAGAMENTO*');
+    L.push(payLabels[s.pay] + (s.pay === 'cash' && s.change.trim() ? ' - troco para R$ ' + s.change.trim() : ''));
+    const waUrl = 'https://wa.me/' + waNum + '?text=' + encodeURIComponent(L.join('\n'));
+
+    /* ---- sheets ---- */
+    const sheetCart = s.sheet === 'cart';
+    const sheetCheckout = s.sheet === 'checkout';
+
+    return {
+      cats: cats, catTitle: curCat.title, catCount: visible.length + (visible.length === 1 ? ' item' : ' itens'),
+      visible: visible, embers: this.embers,
+
+      hasToast: !!s.toast, toast: s.toast,
+
+      hasSel: !!selItem, selView: selView, modalExtras: modalExtras, hasExtras: modalExtras.length > 0,
+      donenessOpts: donenessOpts, note: s.note, setNote: set('note'),
+      qty: s.qty, modalTotalTxt: modalTotalTxt,
+      incQty: () => this.setState({ qty: Math.min(20, s.qty + 1) }),
+      decQty: () => this.setState({ qty: Math.max(1, s.qty - 1) }),
+      closeItem: () => this.setState({ sel: null }),
+      addModal: addModal,
+
+      cartEmpty: cartEmpty, cartCount: count,
+      cartLabel: cartEmpty ? 'Escolha seu burger' : 'Ver carrinho',
+      cartSub: cartEmpty ? 'Seu carrinho está vazio' : (count + (count === 1 ? ' item' : ' itens') + ' · + entrega'),
+      cartAria: cartEmpty ? 'Carrinho vazio' : 'Abrir carrinho, ' + count + ' itens, total ' + fmt(subtotal),
+      subtotalTxt: fmt(subtotal),
+      openCart: () => { if (!cartEmpty) this.setState({ sheet: 'cart' }); },
+
+      hasSheet: !!s.sheet, sheetCart: sheetCart, sheetCheckout: sheetCheckout,
+      sheetTitle: sheetCheckout ? 'Finalizar pedido' : 'Seu carrinho',
+      closeSheet: () => this.setState({ sheet: null }),
+      cartLines: cartLines,
+      goCheckout: () => this.setState({ sheet: 'checkout' }),
+      backToCart: () => this.setState({ sheet: 'cart' }),
+
+      optDelivery: { on: delivery, cls: 'opt' + (delivery ? ' on' : ''), pick: () => this.setState({ mode: 'delivery' }) },
+      optPickup: { on: !delivery, cls: 'opt' + (!delivery ? ' on' : ''), pick: () => this.setState({ mode: 'pickup' }) },
+      isDelivery: delivery,
+      name: s.name, phone: s.phone, street: s.street, num: s.num, hood: s.hood, comp: s.comp, change: s.change,
+      setName: set('name'), setPhone: set('phone'), setStreet: set('street'), setNum: set('num'),
+      setHood: set('hood'), setComp: set('comp'), setChange: set('change'),
+      errName: err('name'), errPhone: err('phone'), errStreet: err('street'), errNum: err('num'), errHood: err('hood'),
+      payOpts: payOpts, showChange: s.pay === 'cash', payWhen: delivery ? 'entrega' : 'retirada',
+      feeTxt: delivery ? fmt(fee) : 'Grátis', totalTxt: fmt(total),
+      valid: valid, invalid: !valid, showError: s.touched && !valid,
+      waUrl: waUrl,
+      tryConfirm: () => this.setState({ touched: true }),
+      confirmOrder: () => this.setState({ success: true, sheet: null }),
+
+      success: s.success, orderNoTxt: '#' + s.orderNo,
+      etaLabel: delivery ? 'Entrega estimada' : 'Pronto em',
+      etaTxt: eta, modeLabel: delivery ? 'Entregar em' : 'Retirada', addrTxt: addrTxt,
+      lastStep: delivery ? 'A caminho' : 'Pronto',
+      newOrder: () => this.setState({
+        success: false, cart: [], sheet: null, sel: null, touched: false, change: '',
+        orderNo: 1000 + Math.floor(Math.random() * 9000)
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>
